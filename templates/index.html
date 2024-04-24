@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portable Document Format Converter</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+
+    <style>
+      /* Add this CSS to show the banned icon when hovering over the upload button */
+      #uploadBtn[disabled] {
+        cursor: not-allowed;
+      }
+
+      /* Style for the progress bar */
+      .progress {
+        width: 100%;
+        height: 30px;
+        background-color: #f0f0f0;
+        border-radius: 5px;
+        margin-top: 20px;
+      }
+
+      .progress-bar {
+        height: 100%;
+        line-height: 30px;
+        text-align: center;
+        color: white;
+        border-radius: 5px;
+        background-color: #007bff;
+      }
+
+      .image-container {
+        display: flex;
+        overflow-x: auto;
+        align-items: center;
+        margin-bottom: 20px;
+        flex-wrap: nowrap; /* Ensure all images stay in one row */
+      }
+
+      .image-container img {
+        margin-bottom: 10px; /* Add some space between images and labels */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Portable Document Format Converter</h1>
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+      <form
+        action="/upload"
+        method="post"
+        enctype="multipart/form-data"
+        id="uploadForm"
+      >
+        <div class="form-group">
+          <input type="file" name="pdfFile" id="pdfFile" />
+        </div>
+        <div class="form-group">
+          <label for="format">Choose a format:</label>
+          <select name="format" id="format">
+            <option value="format1">Format 1</option>
+            <option value="format2">Format 2</option>
+            <option value="format3">Format 3</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn" id="uploadBtn">Upload</button>
+        </div>
+      </form>
+      {% if download_link %}
+      <div class="form-group">
+        <a href="{{ download_link }}" id="downloadBtn" class="btn"
+          >Download Excel</a
+        >
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="form-group">
+      <div class="image-container">
+        <div>
+          <p>Format 1</p>
+          <img
+            src="{{ url_for('static', filename='images/format1.png') }}"
+            alt="Format 1"
+            width="570px"
+            height="460px"
+          />
+        </div>
+        <div>
+          <p>Format 2</p>
+          <img
+            src="{{ url_for('static', filename='images/format2.png') }}"
+            alt="Format 2"
+            width="570px"
+            height="460px"
+          />
+        </div>
+        <div>
+          <p>Format 3</p>
+          <img
+            src="{{ url_for('static', filename='images/format3.png') }}"
+            alt="Format 3"
+            width="570px"
+            height="460px"
+          />
+        </div>
+      </div>
+    </div>
+  </body>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var uploadForm = document.getElementById("uploadForm");
+      var uploadBtn = document.getElementById("uploadBtn");
+      var progressBar = document.getElementById("progressBar");
+      var progressValue = document.getElementById("progressValue");
+
+      uploadForm.addEventListener("submit", function () {
+        uploadBtn.disabled = true;
+        // Simulate conversion progress
+        var progress = 0;
+        var intervalId = setInterval(function () {
+          progress += 10;
+          progressValue.style.width = progress + "%";
+          progressValue.innerHTML = progress + "%";
+          if (progress >= 100) {
+            clearInterval(intervalId);
+            // Enable the download button
+            var downloadBtn = document.getElementById("downloadBtn");
+            if (downloadBtn) {
+              downloadBtn.classList.remove("hidden");
+            }
+          }
+        }, 1000);
+      });
+    });
+  </script>
+</html>
