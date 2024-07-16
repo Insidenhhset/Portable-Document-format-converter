@@ -25,18 +25,10 @@ from format3 import convert_pdf_to_excel, csv_to_excel
 app = Flask(__name__)
 
 ALLOWED_EXTENSIONS = {'pdf'}
-OUTPUT_FOLDER = 'output'
+OUTPUT_FOLDER = '/tmp/output'
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# def get_unique_filename(directory, filename):
-#     count = 1
-#     base, ext = os.path.splitext(filename)
-#     while os.path.exists(os.path.join(directory, filename)):
-#         filename = f"{base}_{count}{ext}"
-#         count += 1
-#     return filename
 
 @app.route('/')
 def index():
@@ -64,17 +56,9 @@ def upload():
                 # Convert PDF to Excel based on selected format
                 if format_option == 'format1':
                     subprocess.run(["python", "format1_csv.py", pdf_path])
-
-    # Execute seatno.py with subprocess
                     subprocess.run(["python", "seatno.py", pdf_path])
-
-    # Execute store.py with subprocess
                     subprocess.run(["python", "store.py", pdf_path])
-
-    # Execute extra.py with subprocess
                     subprocess.run(["python", "extra.py", pdf_path])
-
-    # Execute format1.py with subprocess
                     subprocess.run(["python", "format1.py"])
 
                     input_file = "output_format1.xlsx"
@@ -86,42 +70,28 @@ def upload():
                     shutil.move(input_file, output_file)
 
                 elif format_option == 'format2':
-                    # Run format2_csv.py to convert PDF to CSV
                     subprocess.run(["python", "format2_csv.py", pdf_path])
-
-    # Execute format2.py with subprocess
                     subprocess.run(["python", "format2.py"])
 
-
-                    # Move the output file to the output folder, replacing the existing file if it exists
                     input_file = "output_format2.xlsx"
                     output_file = os.path.join(OUTPUT_FOLDER, "output_format2.xlsx")
                     if os.path.exists(output_file):
-                        os.remove(output_file)  # Delete the existing file
+                        os.remove(output_file)
                     shutil.move(input_file, output_file)
 
                 elif format_option == 'format3':
                     pattern = r"(\b\d{7}\b)((?:.*\n){160})"
                     excluded_ranges = ['2:7', '26:44', '67:74', '93:99', '103:105', '109:112', '137:141', '148:154']
                     convert_pdf_to_excel(pdf_path, pattern, excel_path, excluded_ranges)
-                    csv_to_excel("output.csv", excel_path, excluded_ranges)
+                    csv_to_excel(os.path.join('/tmp', "output.csv"), excel_path, excluded_ranges)
 
-    # Move the excel_path file to the output folder
                     output_file = os.path.join(OUTPUT_FOLDER, 'output_format3.xlsx')
                     shutil.move(excel_path, output_file)
-
 
                 else:
                     return render_template('index.html', error='Invalid format selected.')
 
-                # Generate a unique filename for the output file
-                # output_filename = get_unique_filename(OUTPUT_FOLDER, 'output_format3.xlsx')
-                # output_file_path = os.path.join(OUTPUT_FOLDER, output_filename)
-
-                # Provide the download link for the Excel file
                 download_link = f'/download?format={format_option}'
-
-                # Return the template with the download link
                 return render_template('index.html', download_link=download_link)
             except Exception as e:
                 error_message = f"Error processing file: {str(e)}"
@@ -137,7 +107,7 @@ def download_excel():
 
 if __name__ == '__main__':
     try:
-        app.run(debug=True, port=5001)
+        app.run(debug=True, port=5000)
     except OSError:
         print("Port 5000 is busy. Trying another port...")
         app.run(debug=True, port=0)  # Let Flask choose an available port
