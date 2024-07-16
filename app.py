@@ -137,7 +137,7 @@ def download_excel():
 
 if __name__ == '__main__':
     try:
-        app.run(debug=True, port=5000)
+        app.run(debug=True, port=5001)
     except OSError:
         print("Port 5000 is busy. Trying another port...")
         app.run(debug=True, port=0)  # Let Flask choose an available port
