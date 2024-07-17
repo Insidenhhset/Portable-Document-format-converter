@@ -32,6 +32,7 @@ def run_subprocess(command):
     try:
         result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         result.check_returncode()
+        return result.stdout
     except subprocess.CalledProcessError as e:
         raise RuntimeError(f"Subprocess failed: {e.stderr}")
 
