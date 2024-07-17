@@ -16,7 +16,7 @@ import subprocess
 import os
 import shutil
 from tempfile import TemporaryDirectory
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from format3 import convert_pdf_to_excel, csv_to_excel
 
 app = Flask(__name__)
@@ -29,9 +29,11 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def run_subprocess(command):
-    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    if result.returncode != 0:
-        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
+    try:
+        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result.check_returncode()
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"Subprocess failed: {e.stderr}")
 
 @app.route('/')
 def index():
@@ -53,20 +55,27 @@ def upload():
             excel_path = os.path.join(temp_dir, 'output.xlsx')
 
             try:
+                futures = []
                 if format_option == 'format1':
-                    executor.submit(run_subprocess, ["python", "format1_csv.py", pdf_path]).result()
-                    executor.submit(run_subprocess, ["python", "seatno.py", pdf_path]).result()
-                    executor.submit(run_subprocess, ["python", "store.py", pdf_path]).result()
-                    executor.submit(run_subprocess, ["python", "extra.py", pdf_path]).result()
-                    executor.submit(run_subprocess, ["python", "format1.py"]).result()
+                    futures.append(executor.submit(run_subprocess, ["python", "format1_csv.py", pdf_path]))
+                    futures.append(executor.submit(run_subprocess, ["python", "seatno.py", pdf_path]))
+                    futures.append(executor.submit(run_subprocess, ["python", "store.py", pdf_path]))
+                    futures.append(executor.submit(run_subprocess, ["python", "extra.py", pdf_path]))
+                    futures.append(executor.submit(run_subprocess, ["python", "format1.py"]))
+
+                    for future in as_completed(futures):
+                        future.result()  # Raise any exception that occurred
 
                     input_file = "output_format1.xlsx"
                     output_file = os.path.join(OUTPUT_FOLDER, "output_format1.xlsx")
                     move_file(input_file, output_file)
 
                 elif format_option == 'format2':
-                    executor.submit(run_subprocess, ["python", "format2_csv.py", pdf_path]).result()
-                    executor.submit(run_subprocess, ["python", "format2.py"]).result()
+                    futures.append(executor.submit(run_subprocess, ["python", "format2_csv.py", pdf_path]))
+                    futures.append(executor.submit(run_subprocess, ["python", "format2.py"]))
+
+                    for future in as_completed(futures):
+                        future.result()  # Raise any exception that occurred
 
                     input_file = "output_format2.xlsx"
                     output_file = os.path.join(OUTPUT_FOLDER, "output_format2.xlsx")
@@ -86,9 +95,6 @@ def upload():
                 download_link = f'/download?format={format_option}'
                 return render_template('index.html', download_link=download_link)
 
-            except subprocess.CalledProcessError as e:
-                error_message = f"Error processing file: Subprocess failed with {str(e)}\nOutput: {e.output}\nError: {e.stderr}"
-                return render_template('index.html', error=error_message)
             except Exception as e:
                 error_message = f"Error processing file: {str(e)}"
                 return render_template('index.html', error=error_message)
