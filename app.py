@@ -72,12 +72,8 @@ def upload():
                     move_file(input_file, output_file)
 
                 elif format_option == 'format2':
-                    futures.append(executor.submit(run_subprocess, ["python", "format2_csv.py", pdf_path]))
-                    futures.append(executor.submit(run_subprocess, ["python", "format2.py"]))
-
-                    for future in as_completed(futures):
-                        future.result()  # Raise any exception that occurred
-
+                    subprocess.run(["python", "format2_csv.py", pdf_path])
+                    subprocess.run(["python", "format2.py"])
                     input_file = "output_format2.xlsx"
                     output_file = os.path.join(OUTPUT_FOLDER, "output_format2.xlsx")
                     move_file(input_file, output_file)
