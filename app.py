@@ -29,7 +29,9 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def run_subprocess(command):
-    subprocess.run(command, check=True)
+    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    if result.returncode != 0:
+        raise subprocess.CalledProcessError(result.returncode, command, output=result.stdout, stderr=result.stderr)
 
 @app.route('/')
 def index():
@@ -85,7 +87,7 @@ def upload():
                 return render_template('index.html', download_link=download_link)
 
             except subprocess.CalledProcessError as e:
-                error_message = f"Error processing file: Subprocess failed with {str(e)}"
+                error_message = f"Error processing file: Subprocess failed with {str(e)}\nOutput: {e.output}\nError: {e.stderr}"
                 return render_template('index.html', error=error_message)
             except Exception as e:
                 error_message = f"Error processing file: {str(e)}"
