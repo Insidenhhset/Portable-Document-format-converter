@@ -44,14 +44,17 @@ def extract_user_data_from_csv(csv_path):
 
     # Open CSV file and extract text
     with open(csv_path, "r", newline='') as file:
+        csv.field_size_limit(10**9)
         csv_reader = csv.reader(file)
         
         # Skip the first three lines
         for _ in range(3):
+            csv.field_size_limit(10**9)
             next(csv_reader)
 
         user_data = []
         for row in csv_reader:
+            csv.field_size_limit(10**9)
             text = ' '.join(row)  # Concatenate the row elements into a single string
 
             # Find all matches in the text
@@ -134,7 +137,9 @@ def split_values(value):
         matches = [matches[0][i:i+2] for i in range(0, len(matches[0]), 2)]
     elif len(matches) == 1 and matches[0] == '--':
         matches = ['--']  # Keep only '--' if that's the only match
-    
+    # elif len(matches) == 6:
+        
+
     return ', '.join(matches)
 
 
@@ -155,7 +160,7 @@ def split_values_pattern_1(value):
         return ', '.join(split_matches)
     else:
         # If no '----RCC' is found, use the original regex to find other patterns
-        matches = re.findall(r'\b[A-Z]{2}|\d{3}\.\d{2}|--|\d{2}\.\d{3}|\d{2}\.\d{2}|\d{2}', value)
+        matches = re.findall(r'\b[A-Z]{2}|\d{3}\.\d{2}|--|\d{2}\.\d{2}|\d{2}', value)
         return ', '.join(matches)
 
 
@@ -184,7 +189,8 @@ def split_values_pattern_3(value):
     # Remove spaces before processing
     # value = remove_spaces(value)
         
-    matches = re.findall(r'\b[A-Z]{2}|[A-Z]{2}|--|\d{2}[A-Z]|\d{2}|\d{1}[A-Z]', value)
+    # matches = re.findall(r'\b[A-Z]{2}|[A-Z]{2}|--|\d{2}[A-Z]|\d{2}|\d{1}[A-Z]', value)
+    matches = re.findall(r'\b[A-Z]{2}|[A-Z]{2}|--|\d{2}[A-Z]|\d{2}|\d{1}[A-Z]|\d{2}@\d{1}|\d[A-Z]|\d{2}(?=\d)|\d{1}(?=\d{2})|--|\d{1}@\d{1}|\d{1}(?=[A-Z]{2})|\d+', value)
     
     # Handle special case for consecutive characters like 'RRRRRR'
     if len(matches) == 1 and len(matches[0]) > 2:
@@ -204,7 +210,7 @@ def split_values_pattern_4(value):
     # Two capital letters, two digits followed by one or more letters, two digits,
     # One digit followed by one or more letters, '--', one digit if followed by two letters
     # Or a single digit
-    matches = re.findall(r'[A-Z]{2}|[A-Z]|\d{1}\.\d{2}|--|\d{2}\.\d{2}', value)
+    matches = re.findall(r'\b[A-Z]{2}|[A-Z]{2}|[A-Z]|\d{1}\.\d{2}|--|\d{2}\.\d{2}', value)
     
     # Handle special case for consecutive characters like 'RRRRRR'
     if len(matches) == 1 and len(matches[0]) > 2:
